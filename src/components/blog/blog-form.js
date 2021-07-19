@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
+import DropzoneComponent from "react-dropzone-component";
 
 import RichTextEditor from "../forms/rich-text-editor";
 
@@ -10,10 +11,43 @@ export default class BlogForm extends Component {
     this.state = {
       title: "",
       blog_status: "",
+      content: "",
+      featured_image: "",
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleRichTextEditorChange =
+      this.handleRichTextEditorChange.bind(this);
+
+    this.componentConfig = this.componentConfig.bind(this);
+    this.djsConfig = this.djsConfig.bind(this);
+    this.handleFeaturedImageDrop = this.handleFeaturedImageDrop.bind(this);
+  }
+
+  componentConfig() {
+    return {
+      iconFiletypes: [".jpg", ".png"],
+      showFiletypeIcon: true,
+      postUrl: "https://httpbin.org/post",
+    };
+  }
+
+  handleFeaturedImageDrop() {
+    return {
+      addedfile: (file) => this.setState({ featured_image: file }),
+    };
+  }
+
+  djsConfig() {
+    return {
+      addRemoveLinks: true,
+      maxFiles: 1,
+    };
+  }
+
+  handleRichTextEditorChange(content) {
+    this.setState({ content });
   }
 
   buildForm() {
@@ -21,6 +55,7 @@ export default class BlogForm extends Component {
 
     formData.append("portfolio_blog[title]", this.state.title);
     formData.append("portfolio_blog[blog_status]", this.state.blog_status);
+    formData.append("portfolio_blog[content]", this.state.content);
 
     return formData;
   }
@@ -33,18 +68,20 @@ export default class BlogForm extends Component {
         { withCredentials: true }
       )
       .then((response) => {
-        this.props.handleSuccessfulFormSubmission(response.data.portfolio_blog);
-
         this.setState({
           title: "",
           blog_status: "",
+          content: "",
         });
+
+        this.props.handleSuccessfullFormSubmission(
+          response.data.portfolio_blog
+        );
       })
       .catch((error) => {
         console.log("handleSubmit for blog error", error);
       });
 
-    this.props.handleSuccessfulFormSubmission(this.state);
     event.preventDefault();
   }
 
@@ -56,7 +93,7 @@ export default class BlogForm extends Component {
 
   render() {
     return (
-      <form className="blog-form-wrapper" onSubmit={this.handleSubmit}>
+      <form onSubmit={this.handleSubmit} className="blog-form-wrapper">
         <div className="two-column">
           <input
             type="text"
@@ -65,17 +102,30 @@ export default class BlogForm extends Component {
             placeholder="Blog Title"
             value={this.state.title}
           />
+
           <input
             type="text"
             onChange={this.handleChange}
             name="blog_status"
-            placeholder="Blog Status"
+            placeholder="Blog status"
             value={this.state.blog_status}
           />
         </div>
 
         <div className="one-column">
-          <RichTextEditor />
+          <RichTextEditor
+            handleRichTextEditorChange={this.handleRichTextEditorChange}
+          />
+        </div>
+
+        <div className="image-uploaders">
+          <DropzoneComponent
+            config={this.componentConfig()}
+            djsConfig={this.djsConfig()}
+            eventHandlers={this.handleFeaturedImageDrop()}
+          >
+            <div className="dz-message">Featured Image</div>
+          </DropzoneComponent>
         </div>
 
         <button className="btn">Save</button>
